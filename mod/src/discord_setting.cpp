@@ -143,7 +143,10 @@ public:
                 // distinguish "never authorized" from "authorized but Discord
                 // isn't reachable right now"
                 if (!authorized) {
-                    text = "not authorized";
+                    // surface the actual failure instead of masking it
+                    auto detail = autodeafen::rpc::status();
+                    text = (detail.empty() || detail == "not connected")
+                        ? "not authorized" : detail;
                     color = ccc3(255, 120, 120);
                 } else {
                     auto name = Mod::get()->getSavedValue<std::string>("discord-username", "");
