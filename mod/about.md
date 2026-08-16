@@ -1,11 +1,12 @@
 # AutoDeafen
 
 Deafens you on Discord when your run passes a configured percent (<cy>per
-level, per start position) and un-deafens when the attempt ends. No
-Discord keybind needed: the mod talks to your Discord client directly. Works on
-Windows, Linux, and MacOS.
+level, per start position) and un-deafens when the attempt ends. On Windows,
+you can use the keystroke mode to trigger the deafen keybind. On Linux and
+MacOS, the keybind can't be triggered, so the mod talks to your Discord client
+directly.
 
-## Setup (once)
+## Discord Mode Setup (once)
 
 1. Have the Discord <cy>desktop app</c> running.
 2. Open this mod's settings and click <cg>Connect</c>.
