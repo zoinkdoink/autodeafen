@@ -107,12 +107,12 @@ void prepareKeystrokeMode() {
 void tapKey(KeySpec const& spec) {
     if (runningUnderWine()) {
         // Wine-internal SendInput never reaches native Linux apps like
-        // Discord; Linux is served by the discord delivery mode instead.
+        // Discord; Linux is served by the direct delivery mode instead.
         static bool warned = false;
         if (!warned) {
             warned = true;
-            log::warn("AutoDeafen: keystroke mode does nothing under "
-                      "Wine/Proton — switch to the discord delivery mode");
+            log::warn("AutoDeafen: keybind mode does nothing under "
+                      "Wine/Proton — switch to the direct delivery mode");
         }
         return;
     }

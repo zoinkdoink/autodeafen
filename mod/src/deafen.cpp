@@ -76,7 +76,7 @@ std::optional<KeySpec> specFromKeybind(geode::Keybind const& bind) {
 } // namespace
 
 void request(bool deafened) {
-    if (Mod::get()->getSettingValue<std::string>("delivery-mode") != "keystroke") {
+    if (Mod::get()->getSettingValue<std::string>("delivery-mode") != "keybind") {
         rpc::requestDeafen(deafened);
         return;
     }

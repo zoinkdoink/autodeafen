@@ -31,13 +31,13 @@ deafened, and only un-deafens if it was the one that deafened you.
 
 For native **Windows** setups without a usable RPC server (browser Discord,
 Vesktop without full RPC, or if you decline the OAuth), set `delivery-mode` to
-`keystroke`: the mod taps a configurable key that you bind to Toggle Deafen in
+`keybind`: the mod taps a configurable key that you bind to Toggle Deafen in
 Discord via `SendInput`, no setup needed.
 
 Windows only in practice: desktop Discord on macOS reads global keybinds at the
 raw HID device level, which synthetic events cannot reach (verified against
 both `CGEventPost` and `CGEventPostToPid`), and Wine-internal input never
-reaches native Linux apps. Both platforms use the discord mode.
+reaches native Linux apps. Both platforms use the direct mode.
 
 ## Configuring levels
 

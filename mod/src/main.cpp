@@ -54,6 +54,11 @@ class $modify(AutoDeafenPlayLayer, PlayLayer) {
     }
 
     void resetLevel() {
+        // Restarts that skip the death/complete hooks (quick-restart keybind,
+        // pause-menu restart) would otherwise leave our deafen stuck on.
+        if (m_fields.self()->m_deafenedThisAttempt) {
+            this->undeafenIfNeeded("restart");
+        }
         PlayLayer::resetLevel();
         // Defer resolution to the next postUpdate: by then the respawn has
         // fully applied (active startpos + spawn position are current even if

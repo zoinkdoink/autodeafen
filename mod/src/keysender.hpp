@@ -15,7 +15,7 @@ void tapKey(KeySpec const& spec);
 // True when the Windows build is running under Wine/Proton. Always false on macOS.
 bool runningUnderWine();
 
-// Request whatever OS permission keystroke mode needs, up front (macOS:
+// Request whatever OS permission keybind mode needs, up front (macOS:
 // Accessibility prompt). No-op where nothing is needed.
 void prepareKeystrokeMode();
 

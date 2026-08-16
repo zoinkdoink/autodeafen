@@ -2,11 +2,11 @@
 
 Deafens you on Discord when your run passes a configured percent (<cy>per
 level, per start position</c>) and un-deafens when the attempt ends. On Windows,
-you can use the keystroke mode to trigger the deafen keybind. On Linux and
+you can use the keybind mode to trigger the deafen keybind. On Linux and
 MacOS, the keybind can't be triggered, so the mod talks to your Discord client
 directly.
 
-## Discord Mode Setup (once)
+## Direct Mode Setup (once)
 
 1. Have the Discord <cy>desktop app</c> running.
 2. Open this mod's settings and click <cg>Connect</c>.
@@ -37,7 +37,7 @@ it deafened.
   [wine-discord-ipc-bridge](https://github.com/0e4ef622/wine-discord-ipc-bridge)
   for stock Proton.
 
-There is also a Windows-only <cy>keystroke mode</c> for setups without the
+There is also a Windows-only <cy>keybind mode</c> for setups without the
 Discord desktop app: the mod taps a key you've bound to Toggle Deafen.
 
 ## Credits

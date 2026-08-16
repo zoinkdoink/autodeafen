@@ -209,7 +209,7 @@ void syncKeystrokeModeMirror() {
     // "saved:keystroke-mode" conditions in mod.json.
     Mod::get()->setSavedValue(
         "keystroke-mode",
-        Mod::get()->getSettingValue<std::string>("delivery-mode") == "keystroke");
+        Mod::get()->getSettingValue<std::string>("delivery-mode") == "keybind");
 }
 
 } // namespace
@@ -228,15 +228,15 @@ $execute {
         syncKeystrokeModeMirror();
         // Kick off each mode's one-time setup right away, while the user is
         // looking at the settings screen: Discord consent popup, or the macOS
-        // Accessibility prompt for keystroke mode.
-        if (mode == "discord") autodeafen::rpc::connect();
+        // Accessibility prompt for keybind mode.
+        if (mode == "direct") autodeafen::rpc::connect();
         else autodeafen::prepareKeystrokeMode();
     });
 }
 
 $on_mod(Loaded) {
     syncKeystrokeModeMirror();
-    if (Mod::get()->getSettingValue<std::string>("delivery-mode") == "discord") {
+    if (Mod::get()->getSettingValue<std::string>("delivery-mode") == "direct") {
         // Silently resume a previous authorization at startup so the status
         // reads "connected" before the first deafen. Never triggers the OAuth
         // popup: only runs when a token is already stored.

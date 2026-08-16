@@ -6,7 +6,7 @@
 	},
 	"id": "zoinkdoink.autodeafen",
 	"name": "AutoDeafen",
-	"version": "v0.2.0",
+	"version": "v0.2.1",
 	"developer": "ZoinkDoink",
 	"description": "Deafens you on Discord when a run passes a per-level, per-startpos percent. No keybind needed.",
 	"tags": ["utility"],
@@ -40,22 +40,24 @@
 		"delivery-mode": {
 			"name": "Delivery mode",
 			"type": "string",
-			"default": "discord",
-			"one-of": ["discord", "keystroke"],
-			"description": "<cy>discord</c>: talk to Discord directly (recommended; one-time Authorize popup, no keybind). <cy>keystroke</c>: tap a key you've bound to <cy>Toggle Deafen</c> in Discord — <cl>Windows only</c>. Desktop Discord on macOS reads global keybinds at the hardware level and cannot see synthetic key presses, and Wine/Proton input never reaches native apps."
+			"default": "direct",
+			"one-of": ["direct", "keybind"],
+			"description": "<cy>direct</c>: talk to Discord directly (recommended; one-time Authorize popup, no keybind needed). <cy>keybind</c>: tap a key you've bound to <cy>Toggle Deafen</c> in Discord — <cl>Windows only</c>. Desktop Discord on macOS reads global keybinds at the hardware level and cannot see synthetic key presses, and Wine/Proton input never reaches native apps."
 		},
 		"discord-connect": {
 			"type": "custom:discord-connect",
 			"name": "Discord connection",
 			"description": "Authorize AutoDeafen with your Discord desktop client. Click <cy>Connect</c>, then hit <cy>Authorize</c> in the popup that appears <cl>inside Discord</c>. Only needed once — the connection resumes automatically afterwards.",
-			"enable-if": "!saved:keystroke-mode"
+			"enable-if": "!saved:keystroke-mode",
+			"enable-if-description": "Set Delivery mode to \"direct\" to use this"
 		},
 		"keybind": {
 			"type": "keybind",
 			"name": "Deafen key",
 			"default": "F13",
 			"description": "The key AutoDeafen taps — set the same combo as your Discord <cy>Toggle Deafen</c> keybind.",
-			"enable-if": "saved:keystroke-mode"
+			"enable-if": "saved:keystroke-mode",
+			"enable-if-description": "Set Delivery mode to \"keybind\" to use this"
 		}
 	}
 }
