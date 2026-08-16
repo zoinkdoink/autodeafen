@@ -3,6 +3,7 @@ name: Build
 on:
   push:
     branches: [main]
+    tags: ['v*']
   workflow_dispatch:
 
 jobs:
@@ -30,6 +31,8 @@ jobs:
     name: Package builds
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      contents: write
     steps:
       - uses: geode-sdk/build-geode-mod/combine@main
         id: combine
@@ -38,3 +41,10 @@ jobs:
         with:
           name: zoinkdoink.autodeafen
           path: ${{ steps.combine.outputs.build-output }}
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.combine.outputs.build-output }}/*.geode
+          generate_release_notes: true
