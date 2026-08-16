@@ -6,7 +6,7 @@
 	},
 	"id": "zoinkdoink.autodeafen",
 	"name": "AutoDeafen",
-	"version": "v0.1.0",
+	"version": "v0.2.0",
 	"developer": "ZoinkDoink",
 	"description": "Deafens you on Discord when a run passes a per-level, per-startpos percent. No keybind needed.",
 	"tags": ["utility"],
