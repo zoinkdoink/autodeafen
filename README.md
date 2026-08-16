@@ -4,16 +4,19 @@ A [Geode](https://geode-sdk.org) mod for Geometry Dash that deafens you on
 Discord when a run passes a configured percent (per level, per startpos) and
 un-deafens when the attempt ends. No Discord keybind needed.
 
-Status: **feature-complete on Windows and macOS**; the Linux (Wine/Proton)
-transport is implemented but not yet validated on real hardware.
+Works on **Windows, macOS, and Linux (Wine/Proton)** — validated on real
+hardware on all three. Grab the latest `.geode` from the
+[releases page](https://github.com/zoinkdoink/autodeafen/releases) and drop it
+into `<Geometry Dash>/geode/mods/`.
 
 ## How it works
 
 The mod watches your percent each frame and, when an armed threshold is
 crossed, talks to Discord's **local RPC IPC channel** (named pipe on Windows,
 `discord-ipc-N` unix socket elsewhere) and sets your voice state directly:
-`SET_VOICE_SETTINGS { deaf }`. Auth is a one-time "Authorize" popup inside
-Discord (OAuth + PKCE, no secrets, `rpc`/`rpc.voice.write` scopes):
+`SET_VOICE_SETTINGS { deaf }`. Auth is a one-time "Authorize" consent (OAuth +
+PKCE, no secrets, `rpc`/`rpc.voice.write` scopes) — a popup inside Discord, or
+the browser on Discord builds that reject the in-app route:
 
 - **Windows / macOS**: install the mod, click Authorize once (settings page →
 Discord connection → Connect).
@@ -25,9 +28,10 @@ stock-Proton case — by auto-launching a bundled copy of
 setup either way.
 
 It reads your current deafen state first, never "deafens" someone already
-deafened, and only un-deafens if it was the one that deafened you.
+deafened, and only un-deafens if it was the one that deafened you. Un-deafen
+fires on death, completion, restart, or quit — and optionally while paused.
 
-## Keystroke fallback mode
+## Keybind fallback mode
 
 For native **Windows** setups without a usable RPC server (browser Discord,
 Vesktop without full RPC, or if you decline the OAuth), set `delivery-mode` to
