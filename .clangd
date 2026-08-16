@@ -1,0 +1,4 @@
+CompileFlags:
+  Remove: [-arch]
+  Add: [-std=c++20, -arch, arm64]
+  CompilationDatabase: mod/build
