@@ -5,9 +5,9 @@
 #include "keysender.hpp"  // runningUnderWine()
 
 #ifdef GEODE_IS_WINDOWS
-    #define WIN32_LEAN_AND_MEAN
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
+    // No <winsock2.h>: Geode's PCH force-includes <windows.h> (and with it the
+    // original winsock.h) before this file, so winsock2 would only collide.
+    // Everything used here (socket/connect/send/recv/select) is winsock 1.1.
     #include <windows.h>
 #else
     #include <sys/socket.h>

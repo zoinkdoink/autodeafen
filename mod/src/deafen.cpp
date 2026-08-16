@@ -6,6 +6,9 @@
 
 #include <Geode/Geode.hpp>
 
+#include <optional>
+#include <string>
+
 using namespace geode::prelude;
 
 namespace autodeafen::deafen {
