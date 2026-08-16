@@ -10,6 +10,8 @@
     // Everything used here (socket/connect/send/recv/select) is winsock 1.1.
     #include <windows.h>
 #else
+    #include <arpa/inet.h>
+    #include <netinet/in.h>
     #include <sys/socket.h>
     #include <sys/un.h>
     #include <unistd.h>
@@ -469,6 +471,87 @@ std::unique_ptr<Conn> openTransport() {
 }
 
 } // namespace
+
+std::string waitForOAuthRedirect(int port, int timeoutMs) {
+#ifdef GEODE_IS_WINDOWS
+    WSADATA wsa;
+    WSAStartup(MAKEWORD(2, 2), &wsa);
+    using ListenSock = SOCKET;
+    constexpr ListenSock BAD = INVALID_SOCKET;
+#else
+    using ListenSock = int;
+    constexpr ListenSock BAD = -1;
+#endif
+    ListenSock server = ::socket(AF_INET, SOCK_STREAM, 0);
+    if (server == BAD) return "";
+    int reuse = 1;
+    setsockopt(server, SOL_SOCKET, SO_REUSEADDR,
+               reinterpret_cast<char const*>(&reuse), sizeof(reuse));
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(uint16_t(port));
+    addr.sin_addr.s_addr = htonl(0x7f000001);  // 127.0.0.1
+    auto closeListen = [&](ListenSock s) {
+#ifdef GEODE_IS_WINDOWS
+        closesocket(s);
+#else
+        ::close(s);
+#endif
+    };
+    if (::bind(server, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0
+        || ::listen(server, 1) != 0) {
+        log::warn("AutoDeafen RPC: could not listen on 127.0.0.1:{} for the "
+                  "browser redirect", port);
+        closeListen(server);
+        return "";
+    }
+
+    auto deadline = Clock::now() + std::chrono::milliseconds(timeoutMs);
+    std::string code;
+    while (Clock::now() < deadline) {
+        fd_set rfds;
+        FD_ZERO(&rfds);
+        FD_SET(server, &rfds);
+        timeval tv{1, 0};
+#ifdef GEODE_IS_WINDOWS
+        int sel = ::select(0, &rfds, nullptr, nullptr, &tv);
+#else
+        int sel = ::select(server + 1, &rfds, nullptr, nullptr, &tv);
+#endif
+        if (sel <= 0) continue;
+        ListenSock client = ::accept(server, nullptr, nullptr);
+        if (client == BAD) continue;
+
+        char buf[4096];
+        int n = ::recv(client, buf, sizeof(buf) - 1, 0);
+        if (n > 0) {
+            buf[n] = 0;
+            std::string request(buf);
+            // GET /?code=XXXX&... HTTP/1.1
+            auto pos = request.find("code=");
+            if (pos != std::string::npos) {
+                pos += 5;
+                auto end = request.find_first_of("& \r\n", pos);
+                code = request.substr(pos, end - pos);
+            }
+            char const* body = code.empty()
+                ? "<h2>Authorization failed or was denied.</h2>"
+                  "<p>You can close this tab.</p>"
+                : "<h2>AutoDeafen is authorized!</h2>"
+                  "<p>You can close this tab and return to the game.</p>";
+            std::string response =
+                "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close"
+                "\r\n\r\n" + std::string(body);
+            ::send(client, response.data(), int(response.size()), 0);
+        }
+        closeListen(client);
+        if (!code.empty()) break;
+        // no code (user denied, or a stray request): keep listening until the
+        // deadline in case the real redirect is still coming
+    }
+    closeListen(server);
+    return code;
+}
 
 std::unique_ptr<Conn> open(std::string const& clientId, std::string& outError) {
     auto conn = openTransport();

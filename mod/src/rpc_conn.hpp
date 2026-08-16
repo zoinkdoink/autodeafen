@@ -41,4 +41,9 @@ public:
 // Returns null with a reason in outError if nothing connected.
 std::unique_ptr<Conn> open(std::string const& clientId, std::string& outError);
 
+// Listen on 127.0.0.1:port for a single browser OAuth redirect and return the
+// "code" query parameter (empty on timeout/denial). Blocks up to timeoutMs;
+// worker thread only.
+std::string waitForOAuthRedirect(int port, int timeoutMs);
+
 } // namespace autodeafen::rpcconn

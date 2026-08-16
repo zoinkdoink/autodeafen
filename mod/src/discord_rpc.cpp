@@ -23,6 +23,9 @@ namespace rpcconn = autodeafen::rpcconn;
 // exchange uses PKCE, no secret — validated end to end by spike/rpc_spike.py).
 constexpr char const* BUILTIN_CLIENT_ID = "1537095855319031839";
 constexpr char const* TOKEN_URL = "https://discord.com/api/oauth2/token";
+// Browser-flow fallback; this exact URI must be registered on the Discord app.
+constexpr int OAUTH_REDIRECT_PORT = 53535;
+constexpr char const* OAUTH_REDIRECT_URI = "http://127.0.0.1:53535";
 // Cloudflare rejects default library user agents on discord.com (error 1010)
 constexpr char const* USER_AGENT = "AutoDeafen-Geode/0.1";
 
@@ -262,16 +265,41 @@ private:
         args.set("code_challenge", matjson::Value(challenge));
         args.set("code_challenge_method", matjson::Value("S256"));
         auto data = this->sendCommand("AUTHORIZE", args, 90000);
-        if (!data) return false;
         std::string code;
-        if (auto c = data->get("code"); c.isOk()) {
-            code = c.unwrap().asString().unwrapOr("");
+        bool viaBrowser = false;
+        if (data) {
+            if (auto c = data->get("code"); c.isOk()) {
+                code = c.unwrap().asString().unwrapOr("");
+            }
+        }
+        if (code.empty()) {
+            // Some Discord builds reject these scopes over the RPC AUTHORIZE
+            // command ("invalid_scope") while accepting them through the web
+            // authorize flow — which is also how the working prior art does
+            // it. Open the browser and catch the redirect locally.
+            this->setStatus(autodeafen::rpc::State::AwaitingConsent,
+                            "authorize AutoDeafen in your browser");
+            std::string url = std::string("https://discord.com/oauth2/authorize")
+                + "?client_id=" + BUILTIN_CLIENT_ID
+                + "&response_type=code"
+                + "&scope=" + urlencode("rpc rpc.voice.write")
+                + "&redirect_uri=" + urlencode(OAUTH_REDIRECT_URI)
+                + "&code_challenge=" + challenge
+                + "&code_challenge_method=S256";
+            Loader::get()->queueInMainThread([url] {
+                web::openLinkInBrowser(url);
+            });
+            code = rpcconn::waitForOAuthRedirect(OAUTH_REDIRECT_PORT, 180000);
+            viaBrowser = true;
         }
         if (code.empty()) return false;
 
         std::string form = std::string("client_id=") + BUILTIN_CLIENT_ID
             + "&grant_type=authorization_code&code=" + urlencode(code)
             + "&code_verifier=" + urlencode(verifier);
+        if (viaBrowser) {
+            form += "&redirect_uri=" + urlencode(OAUTH_REDIRECT_URI);
+        }
         return this->exchangeAndStore(form) && this->tryAuthenticate(m_liveToken);
     }
 
