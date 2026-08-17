@@ -1,0 +1,63 @@
+{
+	"geode": "5.9.0",
+	"gd": {
+		"win": "2.2081",
+		"mac": "2.2081"
+	},
+	"id": "zoinkdoink.autodeafen",
+	"name": "Advanced AutoDeafen",
+	"version": "v0.2.3",
+	"developer": "ZoinkDoink",
+	"description": "Deafens you on Discord when a run passes a per-level, per-startpos percent. No keybind needed.",
+	"tags": ["utility"],
+	"dependencies": {
+		"geode.node-ids": ">=v1.23.0"
+	},
+	"resources": {
+		"files": [
+			"resources/winediscordipcbridge.exe"
+		]
+	},
+	"settings": {
+		"enabled": {
+			"name": "Enabled",
+			"type": "bool",
+			"default": true,
+			"description": "Master switch for the whole mod."
+		},
+		"undeafen-on-pause": {
+			"name": "Un-deafen while paused",
+			"type": "bool",
+			"default": false,
+			"description": "If the mod deafened you this attempt, un-deafen when you pause the game and re-deafen when you resume."
+		},
+		"trigger-in-practice": {
+			"name": "Deafen in practice mode",
+			"type": "bool",
+			"default": false,
+			"description": "Also trigger deafens during practice mode attempts."
+		},
+		"delivery-mode": {
+			"name": "Delivery mode",
+			"type": "string",
+			"default": "direct",
+			"one-of": ["direct", "keybind"],
+			"description": "<cy>direct</c>: talk to Discord directly (recommended; one-time Authorize popup, no keybind needed). <cy>keybind</c>: tap a key you've bound to <cy>Toggle Deafen</c> in Discord — <cl>Windows only</c>. Desktop Discord on macOS reads global keybinds at the hardware level and cannot see synthetic key presses, and Wine/Proton input never reaches native apps."
+		},
+		"discord-connect": {
+			"type": "custom:discord-connect",
+			"name": "Discord connection",
+			"description": "Authorize AutoDeafen with your Discord desktop client. Click <cy>Connect</c>, then hit <cy>Authorize</c> in the popup that appears <cl>inside Discord</c>. Only needed once — the connection resumes automatically afterwards.",
+			"enable-if": "!saved:keystroke-mode",
+			"enable-if-description": "Set Delivery mode to \"direct\" to use this"
+		},
+		"keybind": {
+			"type": "keybind",
+			"name": "Deafen key",
+			"default": "F13",
+			"description": "The key AutoDeafen taps — set the same combo as your Discord <cy>Toggle Deafen</c> keybind.",
+			"enable-if": "saved:keystroke-mode",
+			"enable-if-description": "Set Delivery mode to \"keybind\" to use this"
+		}
+	}
+}
