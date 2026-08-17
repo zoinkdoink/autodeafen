@@ -1,10 +1,16 @@
-# AutoDeafen
+# Advanced AutoDeafen
 
 Deafens you on Discord when your run passes a configured percent (<cy>per
-level, per start position</c>) and un-deafens when the attempt ends. On Windows,
-you can use the keybind mode to trigger the deafen keybind. On Linux and
-MacOS, the keybind can't be triggered, so the mod talks to your Discord client
-directly.
+level, per start position</c>) and un-deafens when the attempt ends.
+
+Use the default <cg>direct</c> mode on every platform: it talks to your
+Discord client directly. No keybind to set up, and it knows your real deafen
+state so it never toggles you the wrong way. The <cy>keybind</c> mode is a
+Windows-only mode for normal keybind autodeafen.
+
+<cr>Turn off any other auto-deafen you have</c>, as other auto-deafen mods and
+the auto-deafen features in mod menus like <cy>MegaHack</c> or <cy>Eclipse</c>
+will fight over your Discord state and double-toggle you.
 
 ## Direct Mode Setup (once)
 
@@ -25,14 +31,12 @@ Cross the percent mid-run and you're deafened; die, finish, or quit and you're
 un-deafened. Extra behavior (un-deafen while paused, practice mode) lives in
 the settings.
 
-The mod is strictly opt-in: it does nothing on levels you haven't configured,
-never deafens you if you already deafened yourself, and only un-deafens what
-it deafened.
+The mod is strictly opt-in: it does nothing on levels you haven't configured.
 
 ## Platforms
 
 - <cg>Windows & macOS</c>: fully supported.
-- <cg>Linux (Wine/Proton)</c>: supported — the mod reaches your host Discord
+- <cg>Linux (Wine/Proton)</c>: supported. the mod reaches your host Discord
   automatically, bundling
   [wine-discord-ipc-bridge](https://github.com/0e4ef622/wine-discord-ipc-bridge)
   for stock Proton.

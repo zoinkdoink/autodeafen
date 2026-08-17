@@ -1,3 +1,9 @@
+# v0.2.2
+- Renamed the mod to <cy>Advanced AutoDeafen</c>
+- Recommend the <cg>direct</c> mode everywhere, with clearer docs on what each
+  mode can and can't do
+- Warn about running other auto-deafen mods/menu features at the same time
+
 # v0.2.1
 - Fixed restarting mid-attempt (restart keybind or pause menu) leaving you
   deafened

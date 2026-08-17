@@ -1,4 +1,4 @@
-# AutoDeafen
+# Advanced AutoDeafen
 
 A [Geode](https://geode-sdk.org) mod for Geometry Dash that deafens you on
 Discord when a run passes a configured percent (per level, per startpos) and
@@ -8,6 +8,12 @@ Works on **Windows, macOS, and Linux (Wine/Proton)** — validated on real
 hardware on all three. Grab the latest `.geode` from the
 [releases page](https://github.com/zoinkdoink/autodeafen/releases) and drop it
 into `<Geometry Dash>/geode/mods/`.
+
+Use the default **direct** mode on every platform — it knows your real deafen
+state, so it can't toggle you the wrong way. And turn off any other
+auto-deafen (standalone mods, or the auto-deafen features in mod menus like
+MegaHack/Eclipse): multiple deafeners fight over your Discord state and
+double-toggle you.
 
 ## How it works
 
@@ -27,8 +33,10 @@ stock-Proton case — by auto-launching a bundled copy of
 (MIT, by 0e4ef622) inside the prefix, tied to the game's lifetime. No host-side
 setup either way.
 
-It reads your current deafen state first, never "deafens" someone already
-deafened, and only un-deafens if it was the one that deafened you. Un-deafen
+In direct mode it reads your real deafen state first: it never "deafens"
+someone already deafened, and only un-deafens if it was the one that deafened
+you. (Keybind mode can't read state — a keystroke is a blind toggle, so it
+assumes nothing else touches your deafen key mid-session.) Un-deafen
 fires on death, completion, restart, or quit — and optionally while paused.
 
 ## Keybind fallback mode
