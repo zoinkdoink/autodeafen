@@ -274,9 +274,8 @@ private:
         }
         if (code.empty()) {
             // Some Discord builds reject these scopes over the RPC AUTHORIZE
-            // command ("invalid_scope") while accepting them through the web
-            // authorize flow — which is also how the working prior art does
-            // it. Open the browser and catch the redirect locally.
+            // command ("invalid_scope") but accept them through the web
+            // authorize flow: open the browser and catch the redirect locally.
             this->setStatus(autodeafen::rpc::State::AwaitingConsent,
                             "authorize AutoDeafen in your browser");
             std::string url = std::string("https://discord.com/oauth2/authorize")

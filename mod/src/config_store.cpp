@@ -69,6 +69,9 @@ void ConfigStore::loadFromDisk() {
         if (auto enabled = entry.get("enabled"); enabled.isOk()) {
             cfg.enabled = enabled.unwrap().asBool().unwrapOr(false);
         }
+        if (auto p21 = entry.get("p21"); p21.isOk()) {
+            cfg.use21 = p21.unwrap().asBool().unwrapOr(false);
+        }
         if (auto sp = entry.get("sp"); sp.isOk() && sp.unwrap().isObject()) {
             for (auto& item : sp.unwrap()) {
                 auto spKey = item.getKey();
@@ -102,6 +105,7 @@ geode::Result<> ConfigStore::save() const {
         }
         auto entry = matjson::Value::object();
         entry.set("enabled", matjson::Value(cfg.enabled));
+        if (cfg.use21) entry.set("p21", matjson::Value(true));
         entry.set("sp", sp);
         levels.set(key, entry);
     }

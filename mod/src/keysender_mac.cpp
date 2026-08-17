@@ -77,12 +77,10 @@ void tapKey(KeySpec const& spec) {
         log::warn("AutoDeafen: key '{}' has no macOS mapping", spec.key);
         return;
     }
-    // Known limitation, verified empirically: desktop Discord's macOS global
-    // keybinds listen at the raw HID device level (Input Monitoring), which
-    // synthetic Quartz events can never reach — neither CGEventPost with a
-    // HID-state source nor CGEventPostToPid gets through. The tap is still
-    // posted for any listener that does see Quartz events, but Discord users
-    // on macOS need the direct delivery mode.
+    // Desktop Discord's macOS global keybinds listen at the raw HID device
+    // level (Input Monitoring), which synthetic Quartz events cannot reach.
+    // The tap is still posted for any listener that does see Quartz events;
+    // Discord users on macOS need the direct delivery mode.
     static bool warned = false;
     if (!warned) {
         warned = true;

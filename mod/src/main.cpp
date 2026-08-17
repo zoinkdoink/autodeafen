@@ -26,7 +26,26 @@ class $modify(AutoDeafenPlayLayer, PlayLayer) {
         std::optional<int> m_threshold;
         bool m_pendingResolve = false;
         bool m_deafenedThisAttempt = false;
+        bool m_use21 = false;  // this level compares 2.1-style percents
+        int m_spawnBase = 0;   // absolute percent of the spawn point (2.2 basis)
     };
+
+    // Current percent in the basis the level's config uses, always absolute.
+    // On timestamped levels getCurrentPercentInt counts time since the spawn,
+    // so startpos attempts need the spawn's base percent added; the
+    // untimestamped fallback formula is x-based and already absolute.
+    int currentPercent() {
+        auto f = m_fields.self();
+        if (f->m_use21) {
+            if (!m_player1) return 0;
+            return autodeafen::percentForPos(this, m_player1->getPosition(), true);
+        }
+        int gd = this->getCurrentPercentInt();
+        if (m_level && m_level->m_timestamp >= 1 && f->m_spawnBase > 0) {
+            return std::min(100, f->m_spawnBase + gd);
+        }
+        return gd;
+    }
 
     void setupHasCompleted() {
         PlayLayer::setupHasCompleted();
@@ -54,8 +73,8 @@ class $modify(AutoDeafenPlayLayer, PlayLayer) {
     }
 
     void resetLevel() {
-        // Restarts that skip the death/complete hooks (quick-restart keybind,
-        // pause-menu restart) would otherwise leave our deafen stuck on.
+        // Quick-restart and pause-menu restart skip the death/complete
+        // hooks; clear our deafen here.
         if (m_fields.self()->m_deafenedThisAttempt) {
             this->undeafenIfNeeded("restart");
         }
@@ -73,21 +92,25 @@ class $modify(AutoDeafenPlayLayer, PlayLayer) {
         f->m_threshold = std::nullopt;
         if (!Mod::get()->getSettingValue<bool>("enabled")) return;
         if (!m_level || m_level->isPlatformer()) return;
-        // Practice is opt-in via a global setting. m_isTestMode is left alone:
-        // GD sets it for any attempt that starts from a startpos, which is
-        // exactly what per-startpos configs exist for.
+        // m_isTestMode is set for any attempt that starts from a startpos,
+        // so only practice mode is gated (opt-in via a global setting).
         if (m_isPracticeMode
             && !Mod::get()->getSettingValue<bool>("trigger-in-practice")) return;
 
         auto cfg = autodeafen::ConfigStore::get().levelConfig(
             autodeafen::levelKeyFor(m_level));
-        int spawn = this->getCurrentPercentInt();
+        f->m_use21 = cfg && cfg->use21;
+        f->m_spawnBase = m_startPosObject
+            ? autodeafen::percentForPos(this, m_startPosObject->getPosition(), false)
+            : 0;
+        int spawn = this->currentPercent();
+        int spIndex = this->activeStartPosIndex();
         f->m_threshold = autodeafen::resolveThreshold(
-            cfg ? &*cfg : nullptr, this->activeStartPosIndex(), spawn);
-        if (f->m_threshold) {
-            log::debug("AutoDeafen: armed at {}% (sp {}, spawn {}%)",
-                *f->m_threshold, this->activeStartPosIndex(), spawn);
-        }
+            cfg ? &*cfg : nullptr, spIndex, spawn);
+        log::debug("AutoDeafen resolve: sp={} spawn={}% basis21={} -> {}",
+            spIndex, spawn, f->m_use21,
+            f->m_threshold ? fmt::format("armed at {}%", *f->m_threshold)
+                           : "not armed");
     }
 
     void postUpdate(float dt) {
@@ -98,7 +121,7 @@ class $modify(AutoDeafenPlayLayer, PlayLayer) {
             this->resolveNow();
         }
         if (!f->m_threshold) return;
-        if (this->getCurrentPercentInt() >= *f->m_threshold) {
+        if (this->currentPercent() >= *f->m_threshold) {
             int fired = *f->m_threshold;
             f->m_threshold = std::nullopt;  // at most once per attempt
             f->m_deafenedThisAttempt = true;
@@ -127,15 +150,16 @@ class $modify(AutoDeafenPlayLayer, PlayLayer) {
     void undeafenIfNeeded(char const* why) {
         if (!s_sessionUsed) return;
         m_fields.self()->m_deafenedThisAttempt = false;
-        log::debug("AutoDeafen: un-deafen requested ({})", why);
+        log::info("AutoDeafen: un-deafen requested ({})", why);
         autodeafen::deafen::request(false);
     }
 
     void destroyPlayer(PlayerObject* player, GameObject* object) {
         PlayLayer::destroyPlayer(player, object);
-        // destroyPlayer is also invoked with the anticheat spike as an
-        // integrity check; only a real death should un-deafen.
-        if (object != m_anticheatSpike) {
+        // destroyPlayer also fires for non-deaths: the anticheat integrity
+        // check, and discarding the second player at dual-portal exits.
+        // m_isDead confirms the attempt actually ended.
+        if (object != m_anticheatSpike && m_player1 && m_player1->m_isDead) {
             this->undeafenIfNeeded("death");
         }
     }

@@ -51,11 +51,13 @@ bool LevelConfigPopup::initWith(PlayLayer* playLayer) {
     auto existing = ConfigStore::get().levelConfig(m_levelKey);
     // opening the popup on an unconfigured level implies intent to configure
     m_enabled = existing ? existing->enabled : true;
+    m_use21 = existing && existing->use21;
     LevelConfig config = existing.value_or(LevelConfig{});
 
     this->setTitle(std::string(playLayer->m_level->m_levelName), "goldFont.fnt", .7f);
 
-    // master toggle row, centered under the title: [checkbox] Enable for this level
+    // toggle row, centered under the title:
+    // [x] Enable for this level    [ ] 2.1 %
     auto toggleMenu = CCMenu::create();
     toggleMenu->setContentSize({LIST_WIDTH, 24.f});
     toggleMenu->ignoreAnchorPointForPosition(false);
@@ -65,14 +67,26 @@ bool LevelConfigPopup::initWith(PlayLayer* playLayer) {
     auto toggleLabel = CCLabelBMFont::create("Enable for this level", "bigFont.fnt");
     toggleLabel->setScale(.4f);
     toggleLabel->setAnchorPoint({0.f, .5f});
-    // explicit centering of the pair; layouts kept mashing these together
-    float const toggleWidth = 16.f, gap = 8.f;
+    auto toggler21 = CCMenuItemToggler::createWithStandardSprites(
+        this, menu_selector(LevelConfigPopup::onToggle21), .6f);
+    toggler21->toggle(m_use21);
+    auto label21 = CCLabelBMFont::create("2.1 %", "bigFont.fnt");
+    label21->setScale(.4f);
+    label21->setAnchorPoint({0.f, .5f});
+    // manually centered
+    float const toggleWidth = 16.f, gap = 8.f, groupGap = 24.f;
     float labelWidth = toggleLabel->getScaledContentSize().width;
-    float total = toggleWidth + gap + labelWidth;
-    toggleMenu->addChildAtPosition(toggler, Anchor::Center,
-                                   ccp(-total / 2 + toggleWidth / 2, 0));
-    toggleMenu->addChildAtPosition(toggleLabel, Anchor::Center,
-                                   ccp(-total / 2 + toggleWidth + gap, 0));
+    float label21Width = label21->getScaledContentSize().width;
+    float total = toggleWidth + gap + labelWidth + groupGap
+                + toggleWidth + gap + label21Width;
+    float x = -total / 2;
+    toggleMenu->addChildAtPosition(toggler, Anchor::Center, ccp(x + toggleWidth / 2, 0));
+    x += toggleWidth + gap;
+    toggleMenu->addChildAtPosition(toggleLabel, Anchor::Center, ccp(x, 0));
+    x += labelWidth + groupGap;
+    toggleMenu->addChildAtPosition(toggler21, Anchor::Center, ccp(x + toggleWidth / 2, 0));
+    x += toggleWidth + gap;
+    toggleMenu->addChildAtPosition(label21, Anchor::Center, ccp(x, 0));
     m_mainLayer->addChildAtPosition(toggleMenu, Anchor::Top, ccp(0, -42));
 
     // one row per spawn point
@@ -84,8 +98,6 @@ bool LevelConfigPopup::initWith(PlayLayer* playLayer) {
         activeIndex = it == startPositions.end()
             ? -1 : int(it - startPositions.begin()) + 1;
     }
-    float levelLength = std::max(1.f, playLayer->m_levelLength);
-
     // dark inset behind the list, GD-style
     auto listBg = CCScale9Sprite::create("square02b_001.png");
     listBg->setContentSize({LIST_WIDTH + 8.f, LIST_HEIGHT + 8.f});
@@ -104,24 +116,25 @@ bool LevelConfigPopup::initWith(PlayLayer* playLayer) {
             ->setGap(4.f));
 
     m_inputs.clear();
+    m_rowLabels.clear();
+    m_rowPositions.clear();
     for (int index = 0; index <= int(startPositions.size()); ++index) {
         auto row = CCNode::create();
         row->setContentSize({LIST_WIDTH - 10.f, ROW_HEIGHT});
 
-        // the label is just where this spawn point sits in the level
-        int atPercent = 0;
-        if (index > 0) {
-            auto x = startPositions[size_t(index - 1)]->getPositionX();
-            atPercent = std::clamp(int(x / levelLength * 100.f + .5f), 0, 100);
-        }
-        auto label = CCLabelBMFont::create(
-            fmt::format("{}%", atPercent).c_str(), "bigFont.fnt");
+        // the label is where this spawn point sits in the level; filled in by
+        // refreshRowLabels() so the 2.1 toggle can recompute it live
+        auto pos = index == 0 ? ccp(0, 0)
+                              : startPositions[size_t(index - 1)]->getPosition();
+        auto label = CCLabelBMFont::create("", "bigFont.fnt");
         label->setScale(.5f);
         label->setAnchorPoint({1.f, .5f});
         if (index == activeIndex) {
             label->setColor(ccc3(255, 220, 100));  // the one you're paused on
         }
         row->addChildAtPosition(label, Anchor::Center, ccp(-8, 0));
+        m_rowLabels.push_back(label);
+        m_rowPositions.push_back(pos);
 
         auto input = TextInput::create(52.f, "-");
         input->setCommonFilter(CommonFilter::Uint);
@@ -137,6 +150,7 @@ bool LevelConfigPopup::initWith(PlayLayer* playLayer) {
     }
     scroll->m_contentLayer->updateLayout();
     scroll->scrollToTop();
+    this->refreshRowLabels();
 
     m_mainLayer->addChildAtPosition(scroll, Anchor::Center, ccp(0, -16));
 
@@ -172,9 +186,23 @@ void LevelConfigPopup::onToggleEnabled(CCObject* sender) {
     m_enabled = !static_cast<CCMenuItemToggler*>(sender)->isToggled();
 }
 
+void LevelConfigPopup::onToggle21(CCObject* sender) {
+    m_use21 = !static_cast<CCMenuItemToggler*>(sender)->isToggled();
+    this->refreshRowLabels();
+}
+
+void LevelConfigPopup::refreshRowLabels() {
+    for (size_t i = 0; i < m_rowLabels.size(); ++i) {
+        int percent = i == 0
+            ? 0 : percentForPos(m_playLayer, m_rowPositions[i], m_use21);
+        m_rowLabels[i]->setString(fmt::format("{}%", percent).c_str());
+    }
+}
+
 void LevelConfigPopup::saveConfig() {
     LevelConfig config;
     config.enabled = m_enabled;
+    config.use21 = m_use21;
     for (size_t index = 0; index < m_inputs.size(); ++index) {
         if (auto percent = parsePercent(m_inputs[index]->getString())) {
             config.sp[int(index)] = *percent;

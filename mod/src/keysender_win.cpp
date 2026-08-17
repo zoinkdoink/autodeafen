@@ -106,8 +106,8 @@ void prepareKeystrokeMode() {
 
 void tapKey(KeySpec const& spec) {
     if (runningUnderWine()) {
-        // Wine-internal SendInput never reaches native Linux apps like
-        // Discord; Linux is served by the direct delivery mode instead.
+        // Wine-internal SendInput never reaches native Linux apps; the
+        // direct delivery mode covers Linux.
         static bool warned = false;
         if (!warned) {
             warned = true;

@@ -143,7 +143,6 @@ public:
                 // distinguish "never authorized" from "authorized but Discord
                 // isn't reachable right now"
                 if (!authorized) {
-                    // surface the actual failure instead of masking it
                     auto detail = autodeafen::rpc::status();
                     text = (detail.empty() || detail == "not connected")
                         ? "not authorized" : detail;

@@ -2,15 +2,14 @@
 
 // Discord IPC connection: platform transports + discord-ipc framing.
 //
-// Discord's local RPC is reachable two ways: a WebSocket server (origin-gated
-// against the app's rpc_origins, which unapproved apps cannot set — verified
-// empirically, close code 4001) and the IPC channel (named pipe on Windows,
-// unix socket elsewhere) which has no origin validation. So we speak IPC:
+// Transports, in order:
 //   - Windows native: \\.\pipe\discord-ipc-N
 //   - macOS: $TMPDIR/discord-ipc-N unix socket
-//   - Windows-under-Wine (Linux): the pipe first (works with
-//     wine-discord-ipc-bridge), then AF_UNIX through winsock straight at the
-//     host's socket (works on Wine builds with AF_UNIX support).
+//   - Windows-under-Wine (Linux): the pipe (served by the bundled, auto-
+//     launched wine-discord-ipc-bridge), or AF_UNIX through winsock on Wine
+//     builds that support it.
+// Discord's WebSocket transport validates Origin against the app's
+// rpc_origins, which unapproved apps cannot set (close code 4001).
 
 #include <memory>
 #include <string>

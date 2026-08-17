@@ -10,6 +10,9 @@ namespace autodeafen {
 
 struct LevelConfig {
     bool enabled = false;
+    // Interpret percents as 2.1-style (x / end position). Affects the
+    // popup's startpos labels and the threshold comparison.
+    bool use21 = false;
     // startpos index -> absolute deafen percent. Index 0 is the level's actual
     // start; 1..N are StartPos objects ordered by x, matching the in-game
     // "StartPos n/N" switcher.

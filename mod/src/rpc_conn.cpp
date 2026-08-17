@@ -5,9 +5,8 @@
 #include "keysender.hpp"  // runningUnderWine()
 
 #ifdef GEODE_IS_WINDOWS
-    // No <winsock2.h>: Geode's PCH force-includes <windows.h> (and with it the
-    // original winsock.h) before this file, so winsock2 would only collide.
-    // Everything used here (socket/connect/send/recv/select) is winsock 1.1.
+    // Geode's PCH force-includes <windows.h> (with the original winsock.h)
+    // before this file; everything used here is in that winsock 1.1 surface.
     #include <windows.h>
 #else
     #include <arpa/inet.h>
