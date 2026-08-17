@@ -52,6 +52,7 @@ std::string urlencode(std::string_view s) {
 // which must never touch Mod::get() itself (writes go back via
 // queueInMainThread).
 struct AuthContext {
+    std::string clientId;
     std::string accessToken;
     std::string refreshToken;
 };
@@ -98,6 +99,8 @@ private:
     // nullopt = connect/authorize only.
     void enqueue(std::optional<bool> target) {
         AuthContext auth;
+        auth.clientId = Mod::get()->getSettingValue<std::string>("client-id");
+        if (auth.clientId.empty()) auth.clientId = BUILTIN_CLIENT_ID;
         auth.accessToken = Mod::get()->getSavedValue<std::string>("discord-access-token", "");
         auth.refreshToken = Mod::get()->getSavedValue<std::string>("discord-refresh-token", "");
         {
@@ -198,7 +201,8 @@ private:
     bool ensureReady() {
         if (m_conn && m_authed) return true;
         auto auth = this->authSnapshot();
-        if (!m_conn && !this->connectIpc(BUILTIN_CLIENT_ID)) return false;
+        if (auth.clientId.empty()) auth.clientId = BUILTIN_CLIENT_ID;
+        if (!m_conn && !this->connectIpc(auth.clientId)) return false;
         if (!m_authed && !this->authenticate(auth)) {
             this->disconnect("authorization failed");
             return false;
@@ -238,7 +242,7 @@ private:
         }
         if (!auth.refreshToken.empty()) {
             this->setStatus(autodeafen::rpc::State::Connecting, "refreshing Discord token");
-            std::string form = std::string("client_id=") + BUILTIN_CLIENT_ID
+            std::string form = std::string("client_id=") + auth.clientId
                 + "&grant_type=refresh_token&refresh_token=" + urlencode(auth.refreshToken);
             if (this->exchangeAndStore(form) && this->tryAuthenticate(m_liveToken)) {
                 return true;
@@ -255,7 +259,7 @@ private:
         auto challenge = wire::base64UrlEncode(digest.data(), digest.size());
 
         auto args = matjson::Value::object();
-        args.set("client_id", matjson::Value(BUILTIN_CLIENT_ID));
+        args.set("client_id", matjson::Value(auth.clientId));
         auto scopes = matjson::Value::array();
         scopes.push("rpc");
         scopes.push("rpc.voice.write");
@@ -277,7 +281,7 @@ private:
             this->setStatus(autodeafen::rpc::State::AwaitingConsent,
                             "authorize AutoDeafen in your browser");
             std::string url = std::string("https://discord.com/oauth2/authorize")
-                + "?client_id=" + BUILTIN_CLIENT_ID
+                + "?client_id=" + auth.clientId
                 + "&response_type=code"
                 + "&scope=" + urlencode("rpc rpc.voice.write")
                 + "&redirect_uri=" + urlencode(OAUTH_REDIRECT_URI)
@@ -291,7 +295,7 @@ private:
         }
         if (code.empty()) return false;
 
-        std::string form = std::string("client_id=") + BUILTIN_CLIENT_ID
+        std::string form = std::string("client_id=") + auth.clientId
             + "&grant_type=authorization_code&code=" + urlencode(code)
             + "&code_verifier=" + urlencode(verifier);
         if (viaBrowser) {

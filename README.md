@@ -4,52 +4,70 @@ A [Geode](https://geode-sdk.org) mod for Geometry Dash that deafens you on
 Discord when a run passes a configured percent (per level, per startpos) and
 un-deafens when the attempt ends. No Discord keybind needed.
 
-Works on **Windows, macOS, and Linux (Wine/Proton)** — validated on real
-hardware on all three. Grab the latest `.geode` from the
+Grab the latest `.geode` from the
 [releases page](https://github.com/zoinkdoink/autodeafen/releases) and drop it
 into `<Geometry Dash>/geode/mods/`.
 
-Use the default **direct** mode on every platform — it knows your real deafen
-state, so it can't toggle you the wrong way. And turn off any other
-auto-deafen (standalone mods, or the auto-deafen features in mod menus like
-MegaHack/Eclipse): multiple deafeners fight over your Discord state and
-double-toggle you.
+Turn off any other auto-deafen (standalone mods, or the auto-deafen features
+in mod menus like MegaHack/Eclipse): multiple deafeners fight over your Discord
+state and double-toggle you.
 
-## How it works
+## Two delivery modes
 
-The mod watches your percent each frame and, when an armed threshold is
-crossed, talks to Discord's **local RPC IPC channel** (named pipe on Windows,
-`discord-ipc-N` unix socket elsewhere) and sets your voice state directly:
-`SET_VOICE_SETTINGS { deaf }`. Auth is a one-time "Authorize" consent (OAuth +
-PKCE, no secrets, `rpc`/`rpc.voice.write` scopes) — a popup inside Discord, or
-the browser on Discord builds that reject the in-app route:
+Pick one with the `delivery-mode` setting. Neither is "primary" — they have
+different tradeoffs:
 
-- **Windows / macOS**: install the mod, click Authorize once (settings page →
-Discord connection → Connect).
-- **Linux (Wine/Proton)**: same flow. The mod reaches the host's socket via the
-Wine named pipe, directly over AF_UNIX (Wine Staging 10.2+), or — the common
-stock-Proton case — by auto-launching a bundled copy of
+**`direct`** — talks to Discord's **local RPC IPC channel** (named pipe on
+Windows, `discord-ipc-N` unix socket elsewhere) and sets your voice state with
+`SET_VOICE_SETTINGS { deaf }`. Works on all three platforms, reads your real
+deafen state (so it never toggles you the wrong way, and only un-deafens what
+it deafened), and needs no keybind. Cost: a one-time OAuth authorization that
+Discord gates (see below). On Linux the mod reaches the host socket via the
+Wine named pipe, AF_UNIX (Wine Staging 10.2+), or a bundled auto-launched
 [wine-discord-ipc-bridge](https://github.com/0e4ef622/wine-discord-ipc-bridge)
-(MIT, by 0e4ef622) inside the prefix, tied to the game's lifetime. No host-side
-setup either way.
+(MIT, by 0e4ef622) for stock Proton.
 
-In direct mode it reads your real deafen state first: it never "deafens"
-someone already deafened, and only un-deafens if it was the one that deafened
-you. (Keybind mode can't read state — a keystroke is a blind toggle, so it
-assumes nothing else touches your deafen key mid-session.) Un-deafen
-fires on death, completion, restart, or quit — and optionally while paused.
+**`keybind`** — taps a key you've bound to Toggle Deafen in Discord, via
+`SendInput`. No Discord authorization at all, works for anyone. Cost:
+**native Windows only** (desktop Discord on macOS reads keybinds at the raw HID
+level, unreachable by synthetic events — verified against `CGEventPost` and
+`CGEventPostToPid`; Wine-internal input never reaches native Linux apps), and
+it can't read state, so it assumes nothing else touches your deafen key
+mid-session.
 
-## Keybind fallback mode
+Un-deafen (either mode) fires on death, completion, restart, or quit — and
+optionally while paused.
 
-For native **Windows** setups without a usable RPC server (browser Discord,
-Vesktop without full RPC, or if you decline the OAuth), set `delivery-mode` to
-`keybind`: the mod taps a configurable key that you bind to Toggle Deafen in
-Discord via `SendInput`, no setup needed.
+### The direct-mode authorization gate
 
-Windows only in practice: desktop Discord on macOS reads global keybinds at the
-raw HID device level, which synthetic events cannot reach (verified against
-both `CGEventPost` and `CGEventPostToPid`), and Wine-internal input never
-reaches native Linux apps. Both platforms use the direct mode.
+Discord restricts the `rpc` OAuth scope (required for `SET_VOICE_SETTINGS`) to
+an application's **owner and whitelisted users** unless the app is approved for
+general RPC access. `rpc.voice.write` is not valid on its own — it only works
+alongside `rpc` — so there is no public sub-scope that avoids the gate (tested
+against both the RPC and browser authorize paths). So for this app's built-in
+ID, `direct` works for the owner and up to 50 **App Testers** (Discord
+Developer Portal → your app → App Testers).
+
+Any user can get `direct` without the whitelist by creating their **own**
+Discord application (they're then its owner). Otherwise, `keybind` mode needs
+no authorization at all.
+
+#### Using your own Discord app
+
+1. Go to the [Discord Developer Portal](https://discord.com/developers/applications)
+   and click **New Application**. Give it any name and create it.
+2. Open the **OAuth2** tab (left sidebar). Turn on **Public Client** and save —
+   required, because the mod exchanges the auth code with PKCE and no secret.
+3. Still on the **OAuth2** tab, under **Redirects**, click **Add Redirect**,
+   paste the URL below, and save:
+   ```
+   http://127.0.0.1:53535
+   ```
+4. Open the **General Information** tab and copy the **Application ID**.
+5. In Geometry Dash, open the mod's settings (Geode → Advanced AutoDeafen →
+   gear icon), find **Discord app ID (advanced)**, and paste the ID there.
+6. Back on the mod's **Discord connection** row, click **Log out** (if shown),
+   then **Connect**, and authorize.
 
 ## Configuring levels
 

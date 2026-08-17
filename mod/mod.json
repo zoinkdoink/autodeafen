@@ -6,10 +6,13 @@
 	},
 	"id": "zoinkdoink.autodeafen",
 	"name": "Advanced AutoDeafen",
-	"version": "v0.2.4",
+	"version": "v0.2.5",
 	"developer": "ZoinkDoink",
 	"description": "Deafens you on Discord when a run passes a per-level, per-startpos percent. No keybind needed.",
 	"tags": ["utility"],
+	"links": {
+		"source": "https://github.com/zoinkdoink/autodeafen"
+	},
 	"dependencies": {
 		"geode.node-ids": ">=v1.23.0"
 	},
@@ -58,6 +61,12 @@
 			"description": "The key AutoDeafen taps — set the same combo as your Discord <cy>Toggle Deafen</c> keybind.",
 			"enable-if": "saved:keystroke-mode",
 			"enable-if-description": "Set Delivery mode to \"keybind\" to use this"
+		},
+		"client-id": {
+			"type": "string",
+			"name": "Discord app ID (advanced)",
+			"default": "",
+			"description": "Advanced: leave empty to use the built-in app. To use direct mode without being whitelisted, create your own Discord application, register <cy>http://127.0.0.1:53535</c> as an OAuth2 redirect, and paste its Application ID here — you'll be its owner, so the voice permission works. Log out and reconnect after changing."
 		}
 	}
 }

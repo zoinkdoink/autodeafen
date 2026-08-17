@@ -1,3 +1,8 @@
+# v0.2.5
+- Added a <cy>Discord app ID (advanced)</c> setting so you can use your own
+  Discord app for direct mode without being whitelisted
+- Clearer docs on the two delivery modes and Discord's authorization gate
+
 # v0.2.4
 - Fixed startpos deafen percents on 2.2 levels being counted from double their
   real position, so mid-level startposes never armed
