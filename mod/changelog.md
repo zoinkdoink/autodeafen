@@ -1,3 +1,7 @@
+# v0.2.4
+- Fixed startpos deafen percents on 2.2 levels being counted from double their
+  real position, so mid-level startposes never armed
+
 # v0.2.3
 - Fixed thresholds never firing on startpos runs of 2.2 levels (the game
   counts percent from your spawn there; now correctly treated as absolute)

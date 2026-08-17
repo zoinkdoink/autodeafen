@@ -27,24 +27,17 @@ class $modify(AutoDeafenPlayLayer, PlayLayer) {
         bool m_pendingResolve = false;
         bool m_deafenedThisAttempt = false;
         bool m_use21 = false;  // this level compares 2.1-style percents
-        int m_spawnBase = 0;   // absolute percent of the spawn point (2.2 basis)
     };
 
-    // Current percent in the basis the level's config uses, always absolute.
-    // On timestamped levels getCurrentPercentInt counts time since the spawn,
-    // so startpos attempts need the spawn's base percent added; the
-    // untimestamped fallback formula is x-based and already absolute.
+    // Current absolute percent in the basis the level's config uses.
+    // getCurrentPercentInt is already absolute (it includes the startpos
+    // offset); the 2.1 fallback formula is x-based and likewise absolute.
     int currentPercent() {
-        auto f = m_fields.self();
-        if (f->m_use21) {
+        if (m_fields.self()->m_use21) {
             if (!m_player1) return 0;
             return autodeafen::percentForPos(this, m_player1->getPosition(), true);
         }
-        int gd = this->getCurrentPercentInt();
-        if (m_level && m_level->m_timestamp >= 1 && f->m_spawnBase > 0) {
-            return std::min(100, f->m_spawnBase + gd);
-        }
-        return gd;
+        return this->getCurrentPercentInt();
     }
 
     void setupHasCompleted() {
@@ -100,15 +93,22 @@ class $modify(AutoDeafenPlayLayer, PlayLayer) {
         auto cfg = autodeafen::ConfigStore::get().levelConfig(
             autodeafen::levelKeyFor(m_level));
         f->m_use21 = cfg && cfg->use21;
-        f->m_spawnBase = m_startPosObject
-            ? autodeafen::percentForPos(this, m_startPosObject->getPosition(), false)
+        // Arming guard uses the startpos's own absolute percent: a threshold
+        // at or below where you spawn can never be reached from there.
+        int spawn = m_startPosObject
+            ? autodeafen::percentForPos(this, m_startPosObject->getPosition(), f->m_use21)
             : 0;
-        int spawn = this->currentPercent();
         int spIndex = this->activeStartPosIndex();
         f->m_threshold = autodeafen::resolveThreshold(
             cfg ? &*cfg : nullptr, spIndex, spawn);
-        log::debug("AutoDeafen resolve: sp={} spawn={}% basis21={} -> {}",
-            spIndex, spawn, f->m_use21,
+        std::string cfgThresh = "no entry";
+        if (cfg) {
+            if (auto it = cfg->sp.find(spIndex); it != cfg->sp.end()) {
+                cfgThresh = fmt::format("{}%", it->second);
+            }
+        }
+        log::debug("AutoDeafen resolve: sp={} spawn={}% cfg={} basis21={} -> {}",
+            spIndex, spawn, cfgThresh, f->m_use21,
             f->m_threshold ? fmt::format("armed at {}%", *f->m_threshold)
                            : "not armed");
     }
