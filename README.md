@@ -4,9 +4,23 @@ A [Geode](https://geode-sdk.org) mod for Geometry Dash that deafens you on
 Discord when a run passes a configured percent (per level, per startpos) and
 un-deafens when the attempt ends. No Discord keybind needed.
 
-Grab the latest `.geode` from the
-[releases page](https://github.com/zoinkdoink/autodeafen/releases) and drop it
-into `<Geometry Dash>/geode/mods/`.
+## Install
+
+Requires [Geode](https://geode-sdk.org) installed for Geometry Dash. Then
+either search "Advanced AutoDeafen" in the in-game Geode mod browser, or
+install manually:
+
+1. Download the latest `zoinkdoink.autodeafen.geode` from the
+   [releases page](https://github.com/zoinkdoink/autodeafen/releases).
+2. Drop it into Geode's `mods` folder, then restart the game:
+   - **Windows**: `<Steam>\steamapps\common\Geometry Dash\geode\mods\`
+   - **macOS**: `~/Library/Application Support/Steam/steamapps/common/Geometry Dash/Geometry Dash.app/Contents/geode/mods/`
+   - **Linux (Steam/Proton)**: `~/.steam/steam/steamapps/common/Geometry Dash/geode/mods/`
+     (Flatpak Steam: under `~/.var/app/com.valvesoftware.Steam/.local/share/Steam/...`)
+
+The mods folder sits next to the game executable, not in your save directory.
+On Linux the game runs under Proton, so it uses the Windows-style path shown
+above inside the game folder.
 
 Turn off any other auto-deafen (standalone mods, or the auto-deafen features
 in mod menus like MegaHack/Eclipse): multiple deafeners fight over your Discord
